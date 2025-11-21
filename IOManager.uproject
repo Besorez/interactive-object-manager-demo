@@ -1,22 +1,18 @@
 {
 	"FileVersion": 3,
 	"EngineAssociation": "5.6",
-	"Category": "",
-	"Description": "",
+	"Category": "TechnicalAssessment",
+	"Description": "Senior Unreal Engine C++ Developer Technical Assessment Interactive Object Manager project.",
 	"Modules": [
 		{
 			"Name": "IOManager",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
-		}
-	],
-	"Plugins": [
+		},
 		{
-			"Name": "ModelingToolsEditorMode",
-			"Enabled": true,
-			"TargetAllowList": [
-				"Editor"
-			]
+			"Name": "InteractiveObjectManager",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
 		}
 	]
 }
