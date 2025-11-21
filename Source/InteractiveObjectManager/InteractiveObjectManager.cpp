@@ -4,8 +4,6 @@
 
 #include "Settings/InteractiveObjectSettings.h"
 
-DEFINE_LOG_CATEGORY(LogInteractiveObjectManager);
-
 IMPLEMENT_MODULE(FInteractiveObjectManagerModule, InteractiveObjectManager)
 
 void FInteractiveObjectManagerModule::StartupModule()

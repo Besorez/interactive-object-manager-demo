@@ -8,8 +8,6 @@
 #include "UObject/NoExportTypes.h"
 #include "InteractiveObjectSettings.generated.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogInteractiveObjectSettings, Log, All);
-
 /**
  * Runtime settings for the Interactive Object Manager.
  *

@@ -1,11 +1,10 @@
 // Copyright © 2025 Vladyslav Popushoi. All rights reserved.
 
 #include "Settings/InteractiveObjectSettings.h"
+#include "InteractiveObjectManagerLog.h"
 
 #include "Misc/ConfigCacheIni.h"
 #include "Misc/ScopeLock.h"
-
-DEFINE_LOG_CATEGORY(LogInteractiveObjectSettings);
 
 // Helper functions with internal linkage.
 
@@ -307,5 +306,5 @@ void UInteractiveObjectSettings::SaveScaleToConfig(const FInteractiveObjectRunti
 
 void UInteractiveObjectSettings::LogInvalidValue(const FString& KeyName, const FString& Reason)
 {
-	UE_LOG(LogInteractiveObjectSettings, Warning, TEXT("InteractiveObjectSettings key '%s': %s"), *KeyName, *Reason);
+	UE_LOG(LogInteractiveObjectManager, Warning, TEXT("InteractiveObjectSettings key '%s': %s"), *KeyName, *Reason);
 }

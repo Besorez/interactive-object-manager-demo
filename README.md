@@ -64,3 +64,50 @@ Most gameplay logic lives in C++. Blueprints are used mainly for UI binding and 
 
 - Config through a single settings wrapper  
   All ini access goes through one class that handles defaults, validation and logging.
+  
+---
+
+## Making any Actor interactive
+
+Any `AActor` can become interactive in this demo by adding the `UInteractiveObjectComponent`.
+
+### What UInteractiveObjectComponent does
+
+`UInteractiveObjectComponent` is responsible for local visual control of the Actor:
+
+- Stores the current color (`FLinearColor CurrentColor`).
+- Stores the current uniform scale (`float CurrentScale`).
+- Locates the target `UStaticMeshComponent` on the owner Actor or uses an explicitly set `ScaleTargetComponent`.
+- Creates dynamic material instances for all mesh materials on first color change.
+- Applies color changes through the material parameter `ColorParameterName` (defaults to `BaseColor`).
+- Applies uniform scale changes to the target component.
+
+The component does not use Tick. All changes are applied only when its methods are called explicitly.
+
+Available public methods:
+
+- `ApplyColor(const FLinearColor& NewColor)` – updates the stored color and applies it to the mesh.
+- `ApplyScale(float NewScale)` – updates the stored scale and applies it to the Actor or the target component.
+- `GetCurrentColor()` and `GetCurrentScale()` – return the current values that can be read by UI or other systems.
+
+### Example usage in this demo
+
+The demo project includes a basic example:
+
+- `BP_IOM_InteractiveObjectDemo`  
+  - contains a `StaticMeshComponent` with the material `M_IOM_InteractiveObject` that exposes a `BaseColor` parameter  
+  - has an `InteractiveObjectComponent` attached  
+  - calls `ApplyColor` and `ApplyScale` in `BeginPlay` to demonstrate runtime color and scale changes
+
+To make any other Blueprint interactive:
+
+1. Add a `StaticMeshComponent` with a material that has a vector color parameter (by default `BaseColor`).
+2. Add the `InteractiveObjectComponent`.
+3. Optionally adjust in Details:
+   - `CurrentColor`
+   - `CurrentScale`
+   - `ColorParameterName`
+   - `ScaleTargetComponent` if scale should be applied to a specific component
+4. Call `ApplyColor` and `ApplyScale` from Blueprint or C++ to change the visual appearance of the Actor at runtime.
+
+---
