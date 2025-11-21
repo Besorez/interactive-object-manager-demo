@@ -1,7 +1,11 @@
+// Copyright © 2025 Vladyslav Popushoi. All rights reserved.
+
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
+
+DECLARE_LOG_CATEGORY_EXTERN(LogInteractiveObjectManager, Log, All);
 
 /**
  * Runtime module for the Interactive Object Manager technical assessment.
@@ -22,12 +26,9 @@
 class FInteractiveObjectManagerModule : public IModuleInterface
 {
 public:
-	/** IModuleInterface implementation - called when the module is loaded into memory. */
+	/** IModuleInterface implementation. Called when the module is loaded into memory. */
 	virtual void StartupModule() override;
 
-	/** IModuleInterface implementation - called before the module is unloaded from memory. */
+	/** IModuleInterface implementation. Called before the module is unloaded from memory. */
 	virtual void ShutdownModule() override;
 };
-
-/** Log category for all runtime logging related to the Interactive Object Manager module. */
-DECLARE_LOG_CATEGORY_EXTERN(LogInteractiveObjectManager, Log, All);
