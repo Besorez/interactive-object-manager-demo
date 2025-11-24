@@ -9,14 +9,19 @@
 
 class UInteractiveObjectComponent;
 
+/**
+ * Lightweight item used by UI to present interactive objects.
+ */
 USTRUCT(BlueprintType)
 struct FInteractiveObjectListItem
 {
     GENERATED_BODY()
 
+    /** Runtime Id assigned by the subsystem. */
     UPROPERTY(BlueprintReadOnly, Category = "InteractiveObjectManager")
     int32 Id = INDEX_NONE;
 
+    /** Human readable display name for UI. */
     UPROPERTY(BlueprintReadOnly, Category = "InteractiveObjectManager")
     FString DisplayName;
 };
@@ -27,6 +32,9 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSelectedInteractiveObjectChangedDyn
 /**
  * World level subsystem that keeps track of all interactive objects in a world
  * and exposes a simple selection and operation API for UI.
+ *
+ * Primitive actor classes (cube, sphere) are resolved from
+ * UInteractiveObjectManagerDeveloperSettings in Project Settings.
  */
 UCLASS()
 class INTERACTIVEOBJECTMANAGER_API UInteractiveObjectManagerSubsystem : public UWorldSubsystem
@@ -36,8 +44,26 @@ class INTERACTIVEOBJECTMANAGER_API UInteractiveObjectManagerSubsystem : public U
 public:
     UInteractiveObjectManagerSubsystem();
 
-    // UWorldSubsystem
+    // UWorldSubsystem interface
     virtual void Deinitialize() override;
+
+    /**
+     * Spawns a new interactive primitive using default settings.
+     *
+     * Default spawn type is taken from UInteractiveObjectSettings.
+     * Primitive actor class is resolved from developer settings.
+     */
+    UFUNCTION(BlueprintCallable, Category = "InteractiveObjectManager")
+    void SpawnDefaultObject();
+
+    /**
+     * Spawns a new interactive primitive of the given type.
+     *
+     * Cube or sphere actor class is resolved from developer settings
+     * (no hardcoded asset paths in code).
+     */
+    UFUNCTION(BlueprintCallable, Category = "InteractiveObjectManager")
+    void SpawnObjectOfType(EInteractiveObjectSpawnType SpawnType);
 
     /** Registers an interactive object component in this world. */
     void RegisterInteractiveObject(UInteractiveObjectComponent* InteractiveComponent);
@@ -105,8 +131,10 @@ private:
     TArray<FInteractiveObjectRecord> RegisteredObjects;
 
     void CleanupInvalidRecords();
+
     FInteractiveObjectRecord* FindRecordById(int32 ObjectId);
     FInteractiveObjectRecord* FindRecordByComponent(UInteractiveObjectComponent* InteractiveComponent);
+
     void InvalidateSelectionIfNoLongerValid();
     void BroadcastObjectsListChanged();
     void BroadcastSelectedObjectChanged();

@@ -7,6 +7,8 @@ public class InteractiveObjectManager : ModuleRules
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
+        OptimizeCode = CodeOptimization.Never;
+
         PublicDependencyModuleNames.AddRange(
             new string[]
             {
@@ -15,6 +17,7 @@ public class InteractiveObjectManager : ModuleRules
                 "Engine",
                 "InputCore",
                 "UMG",
+                "CommonUI",
                 "Slate",
                 "SlateCore",
                 "CommonUI"

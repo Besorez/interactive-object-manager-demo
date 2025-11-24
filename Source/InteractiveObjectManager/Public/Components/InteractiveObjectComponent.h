@@ -8,6 +8,7 @@
 class UStaticMeshComponent;
 class USceneComponent;
 class UMaterialInstanceDynamic;
+class UInteractiveObjectManagerSubsystem;
 
 /**
  * Attach this component to any Actor to make it manageable by the Interactive Object Manager.
@@ -17,7 +18,7 @@ class UMaterialInstanceDynamic;
  * - Locates the target StaticMeshComponent (auto or explicit).
  * - Creates dynamic material instances on demand and applies color changes.
  * - Applies uniform scale to the mesh or the owning Actor.
- * - Registers and unregisters with the Interactive Object Manager.
+ * - Registers and unregisters with the Interactive Object Manager subsystem.
  */
 UCLASS(ClassGroup = (Interactive), meta = (BlueprintSpawnableComponent))
 class INTERACTIVEOBJECTMANAGER_API UInteractiveObjectComponent : public UActorComponent
@@ -37,11 +38,15 @@ public:
 
     /** Returns the current color stored by this component. */
     UFUNCTION(BlueprintCallable, Category = "Interactive Object")
-    FLinearColor GetCurrentColor() const { return CurrentColor; }
+    FLinearColor GetCurrentColor() const;
 
     /** Returns the current uniform scale stored by this component. */
     UFUNCTION(BlueprintCallable, Category = "Interactive Object")
-    float GetCurrentScale() const { return CurrentScale; }
+    float GetCurrentScale() const;
+
+    /** Returns a display name that should be shown in UI lists. */
+    UFUNCTION(BlueprintCallable, Category = "Interactive Object")
+    FString GetDisplayNameForUI() const;
 
 protected:
     virtual void BeginPlay() override;
@@ -70,6 +75,10 @@ private:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactive Object", meta = (AllowPrivateAccess = "true"))
     TWeakObjectPtr<USceneComponent> ScaleTargetComponent;
 
+    /** Optional label that overrides actor name in UI lists. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactive Object", meta = (AllowPrivateAccess = "true"))
+    FString DisplayLabel;
+
     /** Dynamic material instances created on the target mesh when color is changed. */
     UPROPERTY(Transient)
     TArray<TObjectPtr<UMaterialInstanceDynamic>> DynamicMaterialInstances;
@@ -83,6 +92,9 @@ private:
 
     /** Tracks whether dynamic material instances were already initialized. */
     bool bAreDynamicMaterialsInitialized;
+
+    /** Cached pointer to the world manager subsystem. */
+    TWeakObjectPtr<UInteractiveObjectManagerSubsystem> CachedManagerSubsystem;
 
     /** Resolve or cache the target StaticMeshComponent for this interactive object. */
     UStaticMeshComponent* GetEffectiveMeshComponent();
@@ -105,10 +117,10 @@ private:
     /** Apply the currently stored uniform scale to the chosen scale target. */
     void ApplyScaleInternal();
 
-    /** Register this interactive object in the manager. */
+    /** Register this interactive object in the manager subsystem. */
     void RegisterWithManager();
 
-    /** Unregister this interactive object from the manager. */
+    /** Unregister this interactive object from the manager subsystem. */
     void UnregisterFromManager();
 
     /** Log a warning about missing mesh once. */

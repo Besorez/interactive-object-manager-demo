@@ -3,6 +3,8 @@
 #include "Components/InteractiveObjectComponent.h"
 #include "InteractiveObjectManagerLog.h"
 
+#include "Subsystems/InteractiveObjectManagerSubsystem.h"
+
 #include "Components/StaticMeshComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
@@ -63,6 +65,28 @@ void UInteractiveObjectComponent::ApplyScale(float NewScale)
     CurrentScale = ClampedScale;
 
     ApplyScaleInternal();
+}
+
+FLinearColor UInteractiveObjectComponent::GetCurrentColor() const
+{
+    return CurrentColor;
+}
+
+float UInteractiveObjectComponent::GetCurrentScale() const
+{
+    return CurrentScale;
+}
+
+FString UInteractiveObjectComponent::GetDisplayNameForUI() const
+{
+    if (!DisplayLabel.IsEmpty())
+    {
+        return DisplayLabel;
+    }
+
+    const AActor* OwnerActor = GetOwner();
+
+    return OwnerActor != nullptr ? OwnerActor->GetName() : FString(TEXT("InteractiveObject"));
 }
 
 UStaticMeshComponent* UInteractiveObjectComponent::GetEffectiveMeshComponent()
@@ -128,7 +152,7 @@ void UInteractiveObjectComponent::InitializeDynamicMaterials()
 
     for (int32 MaterialIndex = 0; MaterialIndex < MaterialCount; ++MaterialIndex)
     {
-        UMaterialInstanceDynamic* DynamicMaterial = MeshComponent->CreateDynamicMaterialInstance(MaterialIndex);
+        UMaterialInstanceDynamic* DynamicMaterial = MeshComponent->CreateAndSetMaterialInstanceDynamic(MaterialIndex);
         if (DynamicMaterial != nullptr)
         {
             DynamicMaterialInstances.Add(DynamicMaterial);
@@ -158,11 +182,13 @@ void UInteractiveObjectComponent::ApplyColorInternal()
         return;
     }
 
+    const FName ParameterName = ColorParameterName.IsNone() ? FName(TEXT("BaseColor")) : ColorParameterName;
+
     for (UMaterialInstanceDynamic* DynamicMaterial : DynamicMaterialInstances)
     {
         if (DynamicMaterial != nullptr)
         {
-            DynamicMaterial->SetVectorParameterValue(ColorParameterName, CurrentColor);
+            DynamicMaterial->SetVectorParameterValue(ParameterName, CurrentColor);
         }
     }
 }
@@ -184,28 +210,73 @@ void UInteractiveObjectComponent::ApplyScaleInternal()
 
 void UInteractiveObjectComponent::RegisterWithManager()
 {
+    UWorld* World = GetWorld();
+    if (World == nullptr)
+    {
+        return;
+    }
+
+    UInteractiveObjectManagerSubsystem* ManagerSubsystem = World->GetSubsystem<UInteractiveObjectManagerSubsystem>();
+    if (ManagerSubsystem == nullptr)
+    {
+        UE_LOG(
+            LogInteractiveObjectManager,
+            Warning,
+            TEXT("InteractiveObjectComponent '%s' on '%s' could not find InteractiveObjectManagerSubsystem."),
+            *GetName(),
+            *GetNameSafe(GetOwner())
+        );
+        return;
+    }
+
+    CachedManagerSubsystem = ManagerSubsystem;
+    ManagerSubsystem->RegisterInteractiveObject(this);
+
     UE_LOG(
         LogInteractiveObjectManager,
         Log,
-        TEXT("InteractiveObjectComponent '%s' registering owner '%s' with manager."),
+        TEXT("InteractiveObjectComponent '%s' registered owner '%s' with manager."),
         *GetName(),
         *GetNameSafe(GetOwner())
     );
-
-    // Integration with the actual manager will be wired here (World Subsystem or similar).
 }
 
 void UInteractiveObjectComponent::UnregisterFromManager()
 {
-    UE_LOG(
-        LogInteractiveObjectManager,
-        Log,
-        TEXT("InteractiveObjectComponent '%s' unregistering owner '%s' from manager."),
-        *GetName(),
-        *GetNameSafe(GetOwner())
-    );
+    if (CachedManagerSubsystem.IsValid())
+    {
+        CachedManagerSubsystem->UnregisterInteractiveObject(this);
 
-    // Integration with the actual manager will be wired here.
+        UE_LOG(
+            LogInteractiveObjectManager,
+            Log,
+            TEXT("InteractiveObjectComponent '%s' unregistered owner '%s' from cached manager."),
+            *GetName(),
+            *GetNameSafe(GetOwner())
+        );
+
+        CachedManagerSubsystem.Reset();
+        return;
+    }
+
+    UWorld* World = GetWorld();
+    if (World == nullptr)
+    {
+        return;
+    }
+
+    if (UInteractiveObjectManagerSubsystem* ManagerSubsystem = World->GetSubsystem<UInteractiveObjectManagerSubsystem>())
+    {
+        ManagerSubsystem->UnregisterInteractiveObject(this);
+
+        UE_LOG(
+            LogInteractiveObjectManager,
+            Log,
+            TEXT("InteractiveObjectComponent '%s' unregistered owner '%s' from world manager."),
+            *GetName(),
+            *GetNameSafe(GetOwner())
+        );
+    }
 }
 
 void UInteractiveObjectComponent::LogMissingMeshIfNeeded()
