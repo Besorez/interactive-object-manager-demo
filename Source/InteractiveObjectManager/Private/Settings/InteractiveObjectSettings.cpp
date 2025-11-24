@@ -75,7 +75,22 @@ void FInteractiveObjectRuntimeSettings::ApplySafeDefaults()
 
 UInteractiveObjectSettings* UInteractiveObjectSettings::Get()
 {
-    return GetMutableDefault<UInteractiveObjectSettings>();
+    UInteractiveObjectSettings* Settings = GetMutableDefault<UInteractiveObjectSettings>();
+
+    // Lazy load config once per process to avoid repeated disk reads.
+    static bool bHasLoadedConfig = false;
+    if (!bHasLoadedConfig)
+    {
+        if (Settings != nullptr)
+        {
+            Settings->LoadFromConfig();
+            Settings->ApplyDefaultsIfInvalid();
+        }
+
+        bHasLoadedConfig = true;
+    }
+
+    return Settings;
 }
 
 void UInteractiveObjectSettings::LoadFromConfig()
@@ -121,7 +136,8 @@ void UInteractiveObjectSettings::SaveToConfig() const
     SaveColorToConfig(LocalSettings);
     SaveScaleToConfig(LocalSettings);
 
-    GConfig->Flush(false, GGameIni);
+    // Persist user specific settings to GameUserSettings.ini.
+    GConfig->Flush(false, GGameUserSettingsIni);
 }
 
 void UInteractiveObjectSettings::ApplyDefaultsIfInvalid()
@@ -298,9 +314,20 @@ void UInteractiveObjectSettings::LoadSpawnTypeFromConfig(FInteractiveObjectRunti
     }
 
     FString Value;
-    if (!GConfig->GetString(GetConfigSectionName(), GetDefaultSpawnTypeKey(), Value, GGameIni))
+    bool bFound = false;
+
+    // Prefer user specific settings from GameUserSettings.ini.
+    bFound = GConfig->GetString(GetConfigSectionName(), GetDefaultSpawnTypeKey(), Value, GGameUserSettingsIni);
+
+    // Fallback to project defaults in Game.ini if user settings are not present.
+    if (!bFound)
     {
-        LogInvalidValue(TEXT("DefaultSpawnType"), TEXT("Key not found in config. Using default value."));
+        bFound = GConfig->GetString(GetConfigSectionName(), GetDefaultSpawnTypeKey(), Value, GGameIni);
+    }
+
+    if (!bFound)
+    {
+        LogInvalidValue(TEXT("DefaultSpawnType"), TEXT("Key not found in user or default config. Using default value."));
         return;
     }
 
@@ -322,9 +349,20 @@ void UInteractiveObjectSettings::LoadColorFromConfig(FInteractiveObjectRuntimeSe
     }
 
     FString Value;
-    if (!GConfig->GetString(GetConfigSectionName(), GetDefaultColorKey(), Value, GGameIni))
+    bool bFound = false;
+
+    // Prefer user specific settings from GameUserSettings.ini.
+    bFound = GConfig->GetString(GetConfigSectionName(), GetDefaultColorKey(), Value, GGameUserSettingsIni);
+
+    // Fallback to project defaults in Game.ini if user settings are not present.
+    if (!bFound)
     {
-        LogInvalidValue(TEXT("DefaultColor"), TEXT("Key not found in config. Using default value."));
+        bFound = GConfig->GetString(GetConfigSectionName(), GetDefaultColorKey(), Value, GGameIni);
+    }
+
+    if (!bFound)
+    {
+        LogInvalidValue(TEXT("DefaultColor"), TEXT("Key not found in user or default config. Using default value."));
         return;
     }
 
@@ -346,9 +384,20 @@ void UInteractiveObjectSettings::LoadScaleFromConfig(FInteractiveObjectRuntimeSe
     }
 
     FString Value;
-    if (!GConfig->GetString(GetConfigSectionName(), GetDefaultScaleKey(), Value, GGameIni))
+    bool bFound = false;
+
+    // Prefer user specific settings from GameUserSettings.ini.
+    bFound = GConfig->GetString(GetConfigSectionName(), GetDefaultScaleKey(), Value, GGameUserSettingsIni);
+
+    // Fallback to project defaults in Game.ini if user settings are not present.
+    if (!bFound)
     {
-        LogInvalidValue(TEXT("DefaultScale"), TEXT("Key not found in config. Using default value."));
+        bFound = GConfig->GetString(GetConfigSectionName(), GetDefaultScaleKey(), Value, GGameIni);
+    }
+
+    if (!bFound)
+    {
+        LogInvalidValue(TEXT("DefaultScale"), TEXT("Key not found in user or default config. Using default value."));
         return;
     }
 
@@ -370,7 +419,7 @@ void UInteractiveObjectSettings::SaveSpawnTypeToConfig(const FInteractiveObjectR
     }
 
     const FString Value = SpawnTypeToString(InSettings.DefaultSpawnType);
-    GConfig->SetString(GetConfigSectionName(), GetDefaultSpawnTypeKey(), *Value, GGameIni);
+    GConfig->SetString(GetConfigSectionName(), GetDefaultSpawnTypeKey(), *Value, GGameUserSettingsIni);
 }
 
 void UInteractiveObjectSettings::SaveColorToConfig(const FInteractiveObjectRuntimeSettings& InSettings) const
@@ -381,7 +430,7 @@ void UInteractiveObjectSettings::SaveColorToConfig(const FInteractiveObjectRunti
     }
 
     const FString Value = InSettings.DefaultColor.ToString();
-    GConfig->SetString(GetConfigSectionName(), GetDefaultColorKey(), *Value, GGameIni);
+    GConfig->SetString(GetConfigSectionName(), GetDefaultColorKey(), *Value, GGameUserSettingsIni);
 }
 
 void UInteractiveObjectSettings::SaveScaleToConfig(const FInteractiveObjectRuntimeSettings& InSettings) const
@@ -392,7 +441,7 @@ void UInteractiveObjectSettings::SaveScaleToConfig(const FInteractiveObjectRunti
     }
 
     const FString Value = InSettings.DefaultScale.ToString();
-    GConfig->SetString(GetConfigSectionName(), GetDefaultScaleKey(), *Value, GGameIni);
+    GConfig->SetString(GetConfigSectionName(), GetDefaultScaleKey(), *Value, GGameUserSettingsIni);
 }
 
 void UInteractiveObjectSettings::LogInvalidValue(const FString& KeyName, const FString& Reason)

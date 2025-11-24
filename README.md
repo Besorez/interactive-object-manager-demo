@@ -32,20 +32,43 @@ Default values are stored in an ini file. When the user changes them and saves, 
   - hold the right mouse button to move the camera and look around
   - release the right mouse button to return the cursor and interact with the UI panel
 
+- Exit:
+  - press `Esc` to exit the game build
+
 ---
 
-## 2. Technology
+## 2. Setup instructions
+
+This section describes how to configure and run the demo in a clean project environment.
+
+1. Open the project with Unreal Engine 5.6.
+2. Open **Edit → Project Settings → Game → Interactive Object Manager**.
+3. In **Primitive Classes**:
+   - set **Cube Primitive Class** to `BP_InteractiveCube` under `/Game/InteractiveObjectManager/Actors`
+   - set **Sphere Primitive Class** to `BP_InteractiveSphere` under the same folder
+4. In **Spawn Settings**:
+   - adjust **Spawn Radius** to define how far from the world origin new objects can appear on the X and Y axes
+   - adjust **Spawn Height** to define the Z offset for spawned objects
+5. Open the level `L_InteractiveObjectDemo_Basic`.
+6. Press **Play in Editor** or run the packaged build.
+7. Use the camera and mouse controls from the overview section and interact with the **Interactive Object Manager** panel to test spawning and editing objects.
+
+The runtime defaults for spawn type, color and scale are loaded from the `[InteractiveObjectManager.Settings]` section and can be edited at runtime through the Settings tab.
+
+---
+
+## 3. Technology
 
 - Engine: Unreal Engine 5.6
 - Language: C++
-- UI: UMG with a CommonUI based root widget class
+- UI: UMG widgets; the root panel class derives from `UCommonActivatableWidget`, but individual controls in this version are standard UMG widgets
 - Config: Unreal config system (GConfig, `[InteractiveObjectManager.Settings]` in `DefaultGame.ini` via `GGameIni`)
 - Target platform: Windows desktop
 - Logs: a CommonUI viewport validation check is disabled in project config so that runtime logs stay clean and free of non critical warnings
 
 ---
 
-## 3. High level architecture
+## 4. High level architecture
 
 The project is intentionally small and is split into three main parts.
 
@@ -61,13 +84,13 @@ The project is intentionally small and is split into three main parts.
 
 - Settings and UI  
   - a C++ settings class that reads and writes default values to a custom section in `DefaultGame.ini` using the Unreal config system  
-  - a CommonUI based UMG screen with two tabs: Main (object list and per object controls) and Settings (ini backed defaults)
+  - a UMG screen driven by a root widget that inherits from `UCommonActivatableWidget`; in this version tabs and buttons are implemented with standard UMG controls
 
 Most gameplay logic lives in C++. Blueprints are used mainly for UI binding and simple presentation.
 
 ---
 
-## 4. Design choices
+## 5. Design choices
 
 - Composition instead of a single base actor  
   Any actor can become interactive by adding a dedicated component instead of inheriting from a special base class. This keeps the system flexible and non intrusive.
@@ -142,7 +165,7 @@ To make any other Blueprint interactive:
 
 ### Initial configuration
 
-Before running the demo, configure the module in Project Settings:
+Before running the demo for the first time, configure the module in Project Settings:
 
 1. Open **Edit → Project Settings → Game → Interactive Object Manager**.
 2. In the **Primitive Classes** section:
@@ -209,17 +232,45 @@ On opening the Settings tab the root widget:
 Two buttons control how changes are applied:
 
 - **Apply**  
-  - reads values from the UI controls
-  - sends them to the settings class as a view data structure
-  - the settings class validates and clamps values as needed
-  - runtime defaults are updated in memory
+  - reads values from the UI controls  
+  - sends them to the settings class as a view data structure  
+  - the settings class validates and clamps values as needed  
+  - runtime defaults are updated in memory  
   - new spawns use the updated defaults immediately, the ini file is not written yet
 
 - **Save**  
-  - performs the same runtime update as Apply
-  - writes validated defaults to the `[InteractiveObjectManager.Settings]` section in `DefaultGame.ini` using GConfig
+  - performs the same runtime update as Apply  
+  - writes validated defaults to the `[InteractiveObjectManager.Settings]` section in `DefaultGame.ini` using GConfig  
   - after restarting the game the new defaults are loaded from ini and shown again in the Settings tab
 
 If invalid or corrupted values are found in the config file, the settings class logs a warning and falls back to safe defaults so the demo continues to run without hard failures.
+
+---
+
+## 6. Known limitations and future improvements
+
+The current implementation focuses on satisfying the assessment requirements with clean architecture. Some optional features that could be added in future iterations:
+
+- **List selection feedback in the world**  
+  The selected object is reflected in the UI label and list selection, but there is no visual highlight or outline on the object in the level.  
+  A natural extension would be to add an optional highlight component or post process effect for the currently selected actor.
+
+- **Selection directly in the level**  
+  At the moment selection is driven only from the UI list.  
+  Another possible improvement is to allow selecting objects by clicking them in the world using a trace from the camera and then updating the selection in the manager subsystem and UI.
+
+- **Object transform editing**  
+  The demo supports color and uniform scale editing as requested by the task.  
+  It does not provide position or rotation controls. A future version could expose translation and rotation gizmos or numeric fields and route those changes through the same manager subsystem.
+
+- **Per object persistence**  
+  Only default settings are persisted between runs. Individual spawned objects and their edited properties are not saved.  
+  A more advanced version could serialize the list of objects and restore them on level load.
+
+- **Partial use of CommonUI**  
+  The root widget uses `UCommonActivatableWidget` for lifecycle and input mode control, but the rest of the hierarchy is built with standard UMG widgets.  
+  A future iteration could fully migrate the Main and Settings tabs to CommonUI specific widgets and patterns to better demonstrate CommonUI workflows.
+
+These limitations are intentional for the scope and time budget of the assessment and leave clear room for future extensions if needed.
 
 ---

@@ -216,14 +216,6 @@ void UInteractiveObjectManagerSubsystem::RegisterInteractiveObject(UInteractiveO
         NewRecord.ObjectId
     );
 
-    // Autoselect first registered object if nothing is selected yet.
-    if (SelectedObjectId == INDEX_NONE)
-    {
-        SelectedObjectId = NewRecord.ObjectId;
-        SelectedObject = InteractiveComponent;
-        BroadcastSelectedObjectChanged();
-    }
-
     BroadcastObjectsListChanged();
 }
 
