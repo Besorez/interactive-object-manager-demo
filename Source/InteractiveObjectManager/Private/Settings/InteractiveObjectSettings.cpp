@@ -161,6 +161,66 @@ void UInteractiveObjectSettings::UpdateRuntimeSettings(const FInteractiveObjectR
     Editor_DefaultScale = RuntimeSettings.DefaultScale;
 }
 
+void UInteractiveObjectSettings::ToViewData(FInteractiveObjectSettingsViewData& OutViewData) const
+{
+    FScopeLock Lock(&SettingsCriticalSection);
+
+    OutViewData.DefaultSpawnType = RuntimeSettings.DefaultSpawnType;
+    OutViewData.DefaultColor = RuntimeSettings.DefaultColor;
+
+    // Use X component as uniform representation. For non uniform values
+    // this will effectively project the vector to a single scalar.
+    OutViewData.DefaultUniformScale = RuntimeSettings.DefaultScale.X;
+}
+
+void UInteractiveObjectSettings::UpdateFromViewData(const FInteractiveObjectSettingsViewData& InViewData)
+{
+    // Start from the current runtime settings so that any future fields are preserved.
+    FInteractiveObjectRuntimeSettings NewSettings;
+    {
+        FScopeLock Lock(&SettingsCriticalSection);
+        NewSettings = RuntimeSettings;
+    }
+
+    NewSettings.DefaultSpawnType = InViewData.DefaultSpawnType;
+    NewSettings.DefaultColor = InViewData.DefaultColor;
+
+    float RequestedScale = InViewData.DefaultUniformScale;
+    const float MinScale = 0.1f;
+    const float MaxScale = 10.0f;
+
+    if (RequestedScale < MinScale || RequestedScale > MaxScale)
+    {
+        const float OriginalScale = RequestedScale;
+        RequestedScale = FMath::Clamp(RequestedScale, MinScale, MaxScale);
+
+        UE_LOG(
+            LogInteractiveObjectManager,
+            Warning,
+            TEXT("InteractiveObjectSettings: DefaultUniformScale value %f is out of range. Clamped to %f."),
+            OriginalScale,
+            RequestedScale
+        );
+    }
+
+    NewSettings.DefaultScale = FVector(RequestedScale, RequestedScale, RequestedScale);
+
+    if (!NewSettings.IsValid())
+    {
+        LogInvalidValue(TEXT("RuntimeSettings"), TEXT("UpdateFromViewData produced invalid values. Applying safe defaults."));
+        NewSettings.ApplySafeDefaults();
+    }
+
+    {
+        FScopeLock Lock(&SettingsCriticalSection);
+        RuntimeSettings = NewSettings;
+    }
+
+    Editor_DefaultSpawnType = RuntimeSettings.DefaultSpawnType;
+    Editor_DefaultColor = RuntimeSettings.DefaultColor;
+    Editor_DefaultScale = RuntimeSettings.DefaultScale;
+}
+
 EInteractiveObjectSpawnType UInteractiveObjectSettings::GetDefaultSpawnType() const
 {
     FScopeLock Lock(&SettingsCriticalSection);

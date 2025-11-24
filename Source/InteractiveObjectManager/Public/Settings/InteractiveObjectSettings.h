@@ -53,6 +53,35 @@ struct INTERACTIVEOBJECTMANAGER_API FInteractiveObjectRuntimeSettings
 };
 
 /**
+ * Lightweight view data used by UI to display and edit settings.
+ *
+ * This structure is intended for Blueprint and UMG. It exposes only the fields
+ * that are required by the Settings Tab and uses a uniform scale float instead
+ * of a full FVector for simplicity.
+ */
+USTRUCT(BlueprintType)
+struct INTERACTIVEOBJECTMANAGER_API FInteractiveObjectSettingsViewData
+{
+    GENERATED_BODY()
+
+    /** Default spawn type used when creating new interactive objects. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InteractiveObjectManager")
+    EInteractiveObjectSpawnType DefaultSpawnType = EInteractiveObjectSpawnType::Cube;
+
+    /** Default color applied to newly spawned interactive objects. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InteractiveObjectManager")
+    FLinearColor DefaultColor = FLinearColor::White;
+
+    /**
+     * Default uniform scale applied to newly spawned interactive objects.
+     *
+     * The same value is applied to all three components of the runtime scale vector.
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InteractiveObjectManager", meta = (ClampMin = "0.1", ClampMax = "10.0"))
+    float DefaultUniformScale = 1.0f;
+};
+
+/**
  * Central configuration object for the Interactive Object Manager.
  *
  * Responsibilities:
@@ -119,6 +148,22 @@ public:
      * Call SaveToConfig after updating the runtime settings if persistence is required.
      */
     void UpdateRuntimeSettings(const FInteractiveObjectRuntimeSettings& NewSettings);
+
+    /**
+     * Fills the provided view data structure with the current runtime settings.
+     *
+     * This method is intended for UI code that needs to display current configuration
+     * values in UMG or CommonUI.
+     */
+    void ToViewData(FInteractiveObjectSettingsViewData& OutViewData) const;
+
+    /**
+     * Updates runtime settings from the provided view data.
+     *
+     * Values are clamped and validated before being stored. Changes are not
+     * automatically persisted to ini. Call SaveToConfig when persistence is required.
+     */
+    void UpdateFromViewData(const FInteractiveObjectSettingsViewData& InViewData);
 
     /** Editor facing default spawn type, used for inspection and tweaking in the editor. */
     UPROPERTY(EditAnywhere, Category = "InteractiveObjectManager", meta = (ToolTip = "Default spawn type exposed to the editor. Does not automatically write to ini."))

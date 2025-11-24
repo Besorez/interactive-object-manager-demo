@@ -3,6 +3,7 @@
 #include "UI/InteractiveObjectManagerRootWidget.h"
 
 #include "InteractiveObjectManagerLog.h"
+#include "Settings/InteractiveObjectSettings.h"
 #include "Subsystems/InteractiveObjectManagerSubsystem.h"
 
 #include "Engine/World.h"
@@ -189,11 +190,12 @@ void UInteractiveObjectManagerRootWidget::HandleSelectedObjectChanged(int32 Sele
     {
         const FText NoneText = FText::FromString(TEXT("None"));
         OnSelectedObjectInfoUpdated(false, INDEX_NONE, NoneText);
-        return;
     }
-
-    const FText DisplayNameText = FText::FromString(SelectedItem.DisplayName);
-    OnSelectedObjectInfoUpdated(true, SelectedItem.Id, DisplayNameText);
+    else
+    {
+        const FText DisplayNameText = FText::FromString(SelectedItem.DisplayName);
+        OnSelectedObjectInfoUpdated(true, SelectedItem.Id, DisplayNameText);
+    }
 }
 
 void UInteractiveObjectManagerRootWidget::SynchronizeInitialState()
@@ -315,4 +317,61 @@ void UInteractiveObjectManagerRootWidget::RequestDeleteSelectedObject()
             TEXT("InteractiveObjectManagerRootWidget::RequestDeleteSelectedObject did not delete anything, probably no object is selected.")
         );
     }
+}
+
+void UInteractiveObjectManagerRootWidget::GetCurrentSettings(FInteractiveObjectSettingsViewData& OutSettings)
+{
+    UInteractiveObjectSettings* Settings = UInteractiveObjectSettings::Get();
+    if (Settings == nullptr)
+    {
+        UE_LOG(
+            LogInteractiveObjectManager,
+            Error,
+            TEXT("InteractiveObjectManagerRootWidget::GetCurrentSettings: Settings object is null. Using hardcoded defaults.")
+        );
+
+        FInteractiveObjectRuntimeSettings RuntimeDefaults;
+        RuntimeDefaults.ApplySafeDefaults();
+
+        OutSettings.DefaultSpawnType = RuntimeDefaults.DefaultSpawnType;
+        OutSettings.DefaultColor = RuntimeDefaults.DefaultColor;
+        OutSettings.DefaultUniformScale = RuntimeDefaults.DefaultScale.X;
+
+        return;
+    }
+
+    Settings->ToViewData(OutSettings);
+}
+
+void UInteractiveObjectManagerRootWidget::ApplySettingsFromUI(const FInteractiveObjectSettingsViewData& NewSettings)
+{
+    UInteractiveObjectSettings* Settings = UInteractiveObjectSettings::Get();
+    if (Settings == nullptr)
+    {
+        UE_LOG(
+            LogInteractiveObjectManager,
+            Warning,
+            TEXT("InteractiveObjectManagerRootWidget::ApplySettingsFromUI: Settings object is null. Changes will be ignored.")
+        );
+        return;
+    }
+
+    Settings->UpdateFromViewData(NewSettings);
+    Settings->ApplyDefaultsIfInvalid();
+}
+
+void UInteractiveObjectManagerRootWidget::SaveSettingsToIni()
+{
+    UInteractiveObjectSettings* Settings = UInteractiveObjectSettings::Get();
+    if (Settings == nullptr)
+    {
+        UE_LOG(
+            LogInteractiveObjectManager,
+            Warning,
+            TEXT("InteractiveObjectManagerRootWidget::SaveSettingsToIni: Settings object is null. Nothing will be saved.")
+        );
+        return;
+    }
+
+    Settings->SaveToConfig();
 }

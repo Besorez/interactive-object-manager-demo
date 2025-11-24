@@ -91,6 +91,16 @@ public:
     UFUNCTION(BlueprintPure, Category = "InteractiveObjectManager")
     FInteractiveObjectListItem GetSelectedObjectInfo(bool& bOutIsValid) const;
 
+    /**
+     * Returns current visual state (color and uniform scale) of the selected object, if any.
+     *
+     * bOutHasSelection will be true only when there is a valid selected interactive object.
+     * When there is no selection or it became invalid, OutColor and OutScale are filled with
+     * safe default values taken from UInteractiveObjectSettings (or hardcoded fallback).
+     */
+    UFUNCTION(BlueprintCallable, Category = "InteractiveObjectManager")
+    void GetSelectedObjectVisualState(bool& bOutHasSelection, FLinearColor& OutColor, float& OutScale) const;
+
     /** Sets color on the currently selected object. Returns true if operation succeeded. */
     UFUNCTION(BlueprintCallable, Category = "InteractiveObjectManager")
     bool SetSelectedObjectColor(const FLinearColor& NewColor);

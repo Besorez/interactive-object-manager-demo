@@ -7,6 +7,7 @@
 #include "InteractiveObjectManagerRootWidget.generated.h"
 
 class UInteractiveObjectManagerSubsystem;
+struct FInteractiveObjectSettingsViewData;
 
 /**
  * Root CommonUI widget for the Interactive Object Manager demo.
@@ -25,9 +26,9 @@ public:
     UInteractiveObjectManagerRootWidget();
 
     /**
-    * Called from Main tab when user presses Spawn (default) button.
-    * Asks the manager subsystem to spawn an object using default settings.
-    */
+     * Called from Main tab when user presses Spawn (default) button.
+     * Asks the manager subsystem to spawn an object using default settings.
+     */
     UFUNCTION(BlueprintCallable, Category = "InteractiveObjectManager")
     void RequestSpawnDefaultObject();
 
@@ -65,6 +66,27 @@ public:
      */
     UFUNCTION(BlueprintCallable, Category = "InteractiveObjectManager")
     void RequestDeleteSelectedObject();
+
+    /**
+     * Called from Settings tab when it is activated or needs to refresh values.
+     * Fills OutSettings with the current runtime settings for UI.
+     */
+    UFUNCTION(BlueprintCallable, Category = "InteractiveObjectManager|Settings")
+    void GetCurrentSettings(FInteractiveObjectSettingsViewData& OutSettings);
+
+    /**
+     * Called from Settings tab when user presses Apply or Save.
+     * Updates runtime settings from UI values without touching the ini file.
+     */
+    UFUNCTION(BlueprintCallable, Category = "InteractiveObjectManager|Settings")
+    void ApplySettingsFromUI(const FInteractiveObjectSettingsViewData& NewSettings);
+
+    /**
+     * Called from Settings tab when user presses Save.
+     * Saves current validated runtime settings to the ini file.
+     */
+    UFUNCTION(BlueprintCallable, Category = "InteractiveObjectManager|Settings")
+    void SaveSettingsToIni();
 
 protected:
     // We use Construct/Destruct instead of OnActivated/OnDeactivated,

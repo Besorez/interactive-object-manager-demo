@@ -132,7 +132,7 @@ void UInteractiveObjectManagerSubsystem::SpawnObjectOfType(EInteractiveObjectSpa
 
     // Randomized spawn transform for the demo: around world origin in a small radius.
     const float SpawnRadius = 1000.0f;
-    const float SpawnHeight = 1000.0f;
+    const float SpawnHeight = 100.0f;
 
     const float AngleRadians = FMath::FRand() * 2.0f * PI;
     const float Distance = FMath::FRandRange(0.0f, SpawnRadius);
@@ -380,6 +380,69 @@ FInteractiveObjectListItem UInteractiveObjectManagerSubsystem::GetSelectedObject
 
     bOutIsValid = true;
     return Result;
+}
+
+//bool UInteractiveObjectManagerSubsystem::GetSelectedObjectProperties(FLinearColor& OutColor, float& OutUniformScale) const
+//{
+//    OutColor = FLinearColor::White;
+//    OutUniformScale = 1.0f;
+//
+//    if (!SelectedObject.IsValid())
+//    {
+//        UE_LOG(
+//            LogInteractiveObjectManager,
+//            Log,
+//            TEXT("GetSelectedObjectProperties: no selected object.")
+//        );
+//        return false;
+//    }
+//
+//    UInteractiveObjectComponent* InteractiveComponent = SelectedObject.Get();
+//    if (InteractiveComponent == nullptr)
+//    {
+//        UE_LOG(
+//            LogInteractiveObjectManager,
+//            Warning,
+//            TEXT("GetSelectedObjectProperties: selected object pointer is invalid.")
+//        );
+//        return false;
+//    }
+//
+//    OutColor = InteractiveComponent->GetCurrentColor();
+//    OutUniformScale = InteractiveComponent->GetCurrentScale();
+//    return true;
+//}
+
+void UInteractiveObjectManagerSubsystem::GetSelectedObjectVisualState(bool& bOutHasSelection, FLinearColor& OutColor, float& OutScale) const
+{
+    bOutHasSelection = false;
+
+    // Default fallback: safe defaults from settings or hardcoded values.
+    FInteractiveObjectRuntimeSettings RuntimeDefaults;
+    RuntimeDefaults.ApplySafeDefaults();
+
+    if (const UInteractiveObjectSettings* Settings = UInteractiveObjectSettings::Get())
+    {
+        RuntimeDefaults = Settings->GetRuntimeSettingsCopy();
+    }
+
+    OutColor = RuntimeDefaults.DefaultColor;
+    OutScale = RuntimeDefaults.DefaultScale.X;
+
+    if (SelectedObjectId == INDEX_NONE || !SelectedObject.IsValid())
+    {
+        return;
+    }
+
+    UInteractiveObjectComponent* InteractiveComponent = SelectedObject.Get();
+    if (InteractiveComponent == nullptr)
+    {
+        return;
+    }
+
+    bOutHasSelection = true;
+    OutColor = InteractiveComponent->GetCurrentColor();
+    OutScale = InteractiveComponent->GetCurrentScale();
 }
 
 bool UInteractiveObjectManagerSubsystem::SetSelectedObjectColor(const FLinearColor& NewColor)
