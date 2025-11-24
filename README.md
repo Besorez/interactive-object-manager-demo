@@ -46,12 +46,9 @@ This section describes how to configure and run the demo in a clean project envi
 3. In **Primitive Classes**:
    - set **Cube Primitive Class** to `BP_InteractiveCube` under `/Game/InteractiveObjectManager/Actors`
    - set **Sphere Primitive Class** to `BP_InteractiveSphere` under the same folder
-4. In **Spawn Settings**:
-   - adjust **Spawn Radius** to define how far from the world origin new objects can appear on the X and Y axes
-   - adjust **Spawn Height** to define the Z offset for spawned objects
-5. Open the level `L_InteractiveObjectDemo_Basic`.
-6. Press **Play in Editor** or run the packaged build.
-7. Use the camera and mouse controls from the overview section and interact with the **Interactive Object Manager** panel to test spawning and editing objects.
+4. Open the level `L_InteractiveObjectDemo_Basic`.
+5. Press **Play in Editor** or run the packaged build.
+6. Use the camera and mouse controls from the overview section and interact with the **Interactive Object Manager** panel to test spawning and editing objects.
 
 The runtime defaults for spawn type, color and scale are loaded from the `[InteractiveObjectManager.Settings]` section and can be edited at runtime through the Settings tab.
 
@@ -171,10 +168,6 @@ Before running the demo for the first time, configure the module in Project Sett
 2. In the **Primitive Classes** section:
    - set **Cube Primitive Class** to your cube blueprint, for example `BP_InteractiveCube` under `/Game/InteractiveObjectManager/Actors`
    - set **Sphere Primitive Class** to your sphere blueprint, for example `BP_InteractiveSphere` under the same folder
-3. In the **Spawn Settings** section:
-   - adjust **Spawn Radius** to control how far from the world origin new objects can appear on the X/Y plane
-   - adjust **Spawn Height** to control the Z offset for spawned objects
-4. Runtime defaults for spawn type, color and scale are stored in the ini section
 
    `[InteractiveObjectManager.Settings]`
 
